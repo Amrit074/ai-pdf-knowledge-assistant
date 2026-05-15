@@ -9,13 +9,31 @@ from httpx import HTTPError
 from app.config import get_settings
 from app.dependencies import get_rag_service, get_vector_store
 from app.logging_config import configure_logging
-from app.models import AskRequest, AskResponse, DeleteResponse, DocumentListResponse, ErrorResponse, UploadResponse
+from app.models import (
+    AskRequest,
+    AskResponse,
+    DeleteResponse,
+    DocumentInfo,
+    DocumentListResponse,
+    ErrorResponse,
+    UploadResponse,
+)
 from app.services.rag_service import RAGService
 from app.services.vector_store import VectorStore
 
 settings = get_settings()
 configure_logging(settings.log_level)
 logger = logging.getLogger(__name__)
+
+
+def to_document_info(document) -> DocumentInfo:
+    return DocumentInfo(
+        document_id=document.document_id,
+        filename=document.filename,
+        pages=document.pages,
+        chunks=document.chunks,
+        uploaded_at=document.uploaded_at,
+    )
 
 app = FastAPI(
     title=settings.app_name,
@@ -50,7 +68,7 @@ async def upload_document(
 ) -> UploadResponse:
     try:
         document = await rag_service.upload_pdf(file)
-        return UploadResponse(message="PDF uploaded and indexed successfully.", document=document)
+        return UploadResponse(message="PDF uploaded and indexed successfully.", document=to_document_info(document))
     except HTTPError as exc:
         logger.exception("Embedding API error")
         raise HTTPException(status_code=502, detail=f"Embedding provider request failed: {exc}") from exc
@@ -60,7 +78,7 @@ async def upload_document(
 
 @app.get("/api/documents", response_model=DocumentListResponse)
 async def list_documents(vector_store: VectorStore = Depends(get_vector_store)) -> DocumentListResponse:
-    return DocumentListResponse(documents=vector_store.list_documents())
+    return DocumentListResponse(documents=[to_document_info(document) for document in vector_store.list_documents()])
 
 
 @app.delete("/api/documents/{document_id}", response_model=DeleteResponse)
