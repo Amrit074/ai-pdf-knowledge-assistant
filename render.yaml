@@ -5,10 +5,6 @@ services:
     plan: starter
     autoDeploy: true
     healthCheckPath: /api/health
-    disk:
-      name: pdf-knowledge-storage
-      mountPath: /app/storage
-      sizeGB: 2
     envVars:
       - key: APP_ENV
         value: production
