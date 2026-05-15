@@ -10,7 +10,8 @@ The system extracts text from PDFs, converts the content into semantic embedding
 - FastAPI backend with clean, modular service architecture
 - Text extraction from PDFs using PyMuPDF
 - Text cleaning, chunking, and overlap-based document splitting
-- Sentence Transformer embeddings with `all-MiniLM-L6-v2`
+- Deployment-friendly embeddings with Gemini `text-embedding-004`
+- Lightweight hashing embeddings for offline/demo fallback
 - FAISS vector search for fast semantic retrieval
 - Retrieval-Augmented Generation with Gemini, OpenAI, or mock mode
 - REST APIs for uploading, listing, deleting, and querying documents
@@ -26,7 +27,7 @@ The system extracts text from PDFs, converts the content into semantic embedding
 | Frontend | HTML, CSS, JavaScript |
 | Backend | Python, FastAPI |
 | PDF Processing | PyMuPDF |
-| Embeddings | Sentence Transformers |
+| Embeddings | Gemini Embeddings, Hashing Fallback |
 | Vector Search | FAISS |
 | LLM Providers | Gemini, OpenAI, Mock |
 | Deployment | Docker, Render |
@@ -46,7 +47,7 @@ PyMuPDF extracts text
 Text is cleaned and split into chunks
         |
         v
-Sentence Transformer creates embeddings
+Gemini creates document embeddings
         |
         v
 FAISS stores vectors and metadata
@@ -101,7 +102,10 @@ The application is configured through environment variables. Use `.env.example` 
 | `LOG_LEVEL` | Logging level |
 | `UPLOAD_DIR` | PDF upload storage path |
 | `INDEX_DIR` | FAISS index and metadata storage path |
-| `EMBEDDING_MODEL` | Sentence Transformer model name |
+| `EMBEDDING_PROVIDER` | `gemini` or `hash` |
+| `EMBEDDING_MODEL` | Embedding model name |
+| `EMBEDDING_DIMENSION` | Embedding vector dimension |
+| `EMBEDDING_BATCH_SIZE` | Number of chunks embedded per API request |
 | `CHUNK_SIZE` | Maximum text chunk size |
 | `CHUNK_OVERLAP` | Overlap between adjacent chunks |
 | `TOP_K` | Default number of retrieved chunks |
@@ -117,6 +121,9 @@ The application is configured through environment variables. Use `.env.example` 
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-1.5-flash
+EMBEDDING_PROVIDER=gemini
+EMBEDDING_MODEL=models/text-embedding-004
+EMBEDDING_DIMENSION=768
 ```
 
 ### OpenAI Configuration
@@ -134,6 +141,8 @@ LLM_PROVIDER=mock
 ```
 
 Mock mode returns retrieval-focused responses without calling an external LLM API. It is useful for demos, testing, and deployments where an API key is not yet configured.
+
+For memory-constrained cloud hosts, Gemini embeddings are recommended because they avoid loading a local PyTorch model into the web service.
 
 ## API Reference
 
@@ -226,7 +235,7 @@ docker run --env-file .env -p 8000:8000 ai-pdf-knowledge-assistant
 - Keep API keys in the deployment platform's secret manager.
 - For scanned PDFs, add OCR processing before text chunking.
 - For larger production workloads, consider replacing file-based FAISS storage with a managed vector database.
-- Cold starts can take longer on small instances because the embedding model loads into memory.
+- On small instances, use Gemini embeddings instead of local ML models to avoid memory limits.
 
 ## License
 

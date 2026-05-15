@@ -14,8 +14,14 @@ services:
         value: storage/uploads
       - key: INDEX_DIR
         value: storage/index
+      - key: EMBEDDING_PROVIDER
+        value: gemini
       - key: EMBEDDING_MODEL
-        value: sentence-transformers/all-MiniLM-L6-v2
+        value: models/text-embedding-004
+      - key: EMBEDDING_DIMENSION
+        value: 768
+      - key: EMBEDDING_BATCH_SIZE
+        value: 16
       - key: CHUNK_SIZE
         value: 900
       - key: CHUNK_OVERLAP
@@ -23,8 +29,8 @@ services:
       - key: TOP_K
         value: 5
       - key: LLM_PROVIDER
-        value: mock
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
       - key: GEMINI_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
         sync: false

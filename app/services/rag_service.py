@@ -50,7 +50,7 @@ class RAGService:
             temp_path.unlink(missing_ok=True)
             raise ValueError("No extractable text found. Scanned PDFs need OCR before upload.")
 
-        embeddings = self.embedding_service.embed_texts([text for _, text in page_chunks])
+        embeddings = await self.embedding_service.embed_texts([text for _, text in page_chunks])
         document = self.vector_store.add_document(Path(file.filename).name, page_chunks, embeddings)
 
         document_dir = self.upload_dir / document.document_id
@@ -60,7 +60,7 @@ class RAGService:
         return document
 
     async def ask(self, question: str, top_k: int, document_id: str | None = None) -> tuple[str, list[SourceChunk]]:
-        query_embedding = self.embedding_service.embed_query(question)
+        query_embedding = await self.embedding_service.embed_query(question)
         results = self.vector_store.search(query_embedding, top_k=top_k, document_id=document_id)
         if not results:
             return "I could not find relevant content in the uploaded documents.", []

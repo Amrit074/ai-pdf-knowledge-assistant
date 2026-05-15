@@ -11,7 +11,7 @@ from app.services.vector_store import VectorStore
 @lru_cache
 def get_embedding_service() -> EmbeddingService:
     settings = get_settings()
-    return EmbeddingService(settings.embedding_model)
+    return EmbeddingService(settings)
 
 
 @lru_cache
