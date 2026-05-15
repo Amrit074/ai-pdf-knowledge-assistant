@@ -10,8 +10,8 @@ The system extracts text from PDFs, converts the content into semantic embedding
 - FastAPI backend with clean, modular service architecture
 - Text extraction from PDFs using PyMuPDF
 - Text cleaning, chunking, and overlap-based document splitting
-- Deployment-friendly embeddings with Gemini `gemini-embedding-001`
-- Lightweight hashing embeddings for offline/demo fallback
+- Lightweight hashing embeddings for free cloud deployment
+- Optional Gemini `gemini-embedding-001` embeddings for higher-quality retrieval
 - FAISS vector search for fast semantic retrieval
 - Retrieval-Augmented Generation with Gemini, OpenAI, or mock mode
 - REST APIs for uploading, listing, deleting, and querying documents
@@ -27,7 +27,7 @@ The system extracts text from PDFs, converts the content into semantic embedding
 | Frontend | HTML, CSS, JavaScript |
 | Backend | Python, FastAPI |
 | PDF Processing | PyMuPDF |
-| Embeddings | Gemini Embeddings, Hashing Fallback |
+| Embeddings | Hashing Embeddings, Optional Gemini Embeddings |
 | Vector Search | FAISS |
 | LLM Providers | Gemini, OpenAI, Mock |
 | Deployment | Docker, Render |
@@ -47,7 +47,7 @@ PyMuPDF extracts text
 Text is cleaned and split into chunks
         |
         v
-Gemini creates document embeddings
+The app creates document embeddings
         |
         v
 FAISS stores vectors and metadata
@@ -121,7 +121,7 @@ The application is configured through environment variables. Use `.env.example` 
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash
-EMBEDDING_PROVIDER=gemini
+EMBEDDING_PROVIDER=hash
 EMBEDDING_MODEL=models/gemini-embedding-001
 EMBEDDING_DIMENSION=768
 ```
@@ -142,7 +142,7 @@ LLM_PROVIDER=mock
 
 Mock mode returns retrieval-focused responses without calling an external LLM API. It is useful for demos, testing, and deployments where an API key is not yet configured.
 
-For memory-constrained cloud hosts, Gemini embeddings are recommended because they avoid loading a local PyTorch model into the web service.
+For free Render deployments, hash embeddings are recommended because they avoid PyTorch memory usage and do not require access to Gemini's embedding endpoint.
 
 ## API Reference
 
@@ -235,7 +235,7 @@ docker run --env-file .env -p 8000:8000 ai-pdf-knowledge-assistant
 - Keep API keys in the deployment platform's secret manager.
 - For scanned PDFs, add OCR processing before text chunking.
 - For larger production workloads, consider replacing file-based FAISS storage with a managed vector database.
-- On small instances, use Gemini embeddings instead of local ML models to avoid memory limits.
+- On small instances, use hash embeddings or hosted embeddings instead of local PyTorch models to avoid memory limits.
 
 ## License
 

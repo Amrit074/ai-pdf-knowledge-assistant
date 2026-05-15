@@ -15,7 +15,7 @@ services:
       - key: INDEX_DIR
         value: storage/index
       - key: EMBEDDING_PROVIDER
-        value: gemini
+        value: hash
       - key: EMBEDDING_MODEL
         value: models/gemini-embedding-001
       - key: EMBEDDING_DIMENSION
