@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF Knowledge Assistant</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar">
+        <div>
+          <h1>PDF Knowledge Assistant</h1>
+          <p>Upload PDFs, retrieve relevant passages, and ask contextual questions.</p>
+        </div>
+        <span id="status-pill" class="status-pill">Checking API</span>
+      </section>
+
+      <section class="workspace">
+        <aside class="sidebar">
+          <form id="upload-form" class="panel">
+            <h2>Documents</h2>
+            <label class="file-picker">
+              <input id="pdf-file" type="file" accept="application/pdf" required />
+              <span>Choose PDF</span>
+            </label>
+            <button type="submit">Upload and Index</button>
+            <p id="upload-message" class="message"></p>
+          </form>
+
+          <div class="panel document-panel">
+            <div class="panel-heading">
+              <h2>Library</h2>
+              <button id="refresh-docs" class="secondary" type="button">Refresh</button>
+            </div>
+            <div id="document-list" class="document-list"></div>
+          </div>
+        </aside>
+
+        <section class="chat-area">
+          <form id="ask-form" class="question-form">
+            <textarea id="question" placeholder="Ask a question about your PDFs..." required></textarea>
+            <div class="question-actions">
+              <select id="document-select">
+                <option value="">All documents</option>
+              </select>
+              <input id="top-k" type="number" min="1" max="20" value="5" aria-label="Top K" />
+              <button type="submit">Ask</button>
+            </div>
+          </form>
+
+          <section id="answer-card" class="answer-card hidden">
+            <h2>Answer</h2>
+            <div id="answer"></div>
+            <h3>Sources</h3>
+            <div id="sources" class="sources"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
