@@ -166,7 +166,7 @@ class VectorStore:
         if self.index.ntotal == 0:
             return []
 
-        top_n = min(max(top_k * 5 if document_id else top_k, top_k), self.index.ntotal)
+        top_n = self.index.ntotal if document_id else min(top_k, self.index.ntotal)
         scores, indices = self.index.search(query_embedding, top_n)
         results: list[SearchResult] = []
 
