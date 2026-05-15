@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     index_dir: Path = Path("storage/index")
 
     embedding_provider: str = "gemini"
-    embedding_model: str = "models/text-embedding-004"
+    embedding_model: str = "models/gemini-embedding-001"
     embedding_dimension: int = Field(default=768, ge=64)
     embedding_batch_size: int = Field(default=16, ge=1, le=100)
     chunk_size: int = Field(default=900, ge=200)
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     llm_provider: str = "mock"
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-2.5-flash"
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
 

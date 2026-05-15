@@ -52,6 +52,7 @@ class EmbeddingService:
                             "model": model,
                             "content": {"parts": [{"text": text}]},
                             "taskType": task_type,
+                            "outputDimensionality": self.dimension,
                         }
                         for text in batch
                     ]

@@ -17,7 +17,7 @@ services:
       - key: EMBEDDING_PROVIDER
         value: gemini
       - key: EMBEDDING_MODEL
-        value: models/text-embedding-004
+        value: models/gemini-embedding-001
       - key: EMBEDDING_DIMENSION
         value: 768
       - key: EMBEDDING_BATCH_SIZE
@@ -31,6 +31,6 @@ services:
       - key: LLM_PROVIDER
         value: gemini
       - key: GEMINI_MODEL
-        value: gemini-1.5-flash
+        value: gemini-2.5-flash
       - key: GEMINI_API_KEY
         sync: false

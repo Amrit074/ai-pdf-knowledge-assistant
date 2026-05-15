@@ -10,7 +10,7 @@ The system extracts text from PDFs, converts the content into semantic embedding
 - FastAPI backend with clean, modular service architecture
 - Text extraction from PDFs using PyMuPDF
 - Text cleaning, chunking, and overlap-based document splitting
-- Deployment-friendly embeddings with Gemini `text-embedding-004`
+- Deployment-friendly embeddings with Gemini `gemini-embedding-001`
 - Lightweight hashing embeddings for offline/demo fallback
 - FAISS vector search for fast semantic retrieval
 - Retrieval-Augmented Generation with Gemini, OpenAI, or mock mode
@@ -120,9 +120,9 @@ The application is configured through environment variables. Use `.env.example` 
 ```env
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.5-flash
 EMBEDDING_PROVIDER=gemini
-EMBEDDING_MODEL=models/text-embedding-004
+EMBEDDING_MODEL=models/gemini-embedding-001
 EMBEDDING_DIMENSION=768
 ```
 
