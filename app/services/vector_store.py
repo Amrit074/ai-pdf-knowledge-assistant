@@ -50,25 +50,49 @@ class VectorStore:
         self.embeddings = self._load_embeddings()
         self.chunks = self._load_chunks()
         self.documents = self._load_documents()
+        self._ensure_index_consistency()
 
     def _load_index(self) -> faiss.Index:
         if self.index_path.exists():
-            return faiss.read_index(str(self.index_path))
+            index = faiss.read_index(str(self.index_path))
+            if index.d != self.dimension:
+                logger.warning(
+                    "Ignoring FAISS index with dimension %s because configured dimension is %s",
+                    index.d,
+                    self.dimension,
+                )
+                return faiss.IndexFlatIP(self.dimension)
+            return index
         return faiss.IndexFlatIP(self.dimension)
 
     def _load_chunks(self) -> list[ChunkMetadata]:
         if not self.chunks_path.exists():
             return []
         with self.chunks_path.open("rb") as file:
-            return pickle.load(file)
+            chunks = pickle.load(file)
+        if len(chunks) != len(self.embeddings):
+            logger.warning("Ignoring chunk metadata because it does not match embedding count")
+            return []
+        return chunks
 
     def _load_embeddings(self) -> np.ndarray:
         if self.embeddings_path.exists():
-            return np.load(self.embeddings_path).astype("float32")
+            embeddings = np.load(self.embeddings_path).astype("float32")
+            if embeddings.ndim != 2 or embeddings.shape[1] != self.dimension:
+                logger.warning(
+                    "Ignoring embeddings with shape %s because configured dimension is %s",
+                    embeddings.shape,
+                    self.dimension,
+                )
+                return np.empty((0, self.dimension), dtype="float32")
+            return embeddings
         return np.empty((0, self.dimension), dtype="float32")
 
     def _load_documents(self) -> dict[str, DocumentMetadata]:
         if not self.documents_path.exists():
+            return {}
+        if not self.chunks:
+            logger.warning("Ignoring document metadata because no compatible chunks are loaded")
             return {}
         with self.documents_path.open("r", encoding="utf-8") as file:
             raw = json.load(file)
@@ -81,6 +105,24 @@ class VectorStore:
             pickle.dump(self.chunks, file)
         with self.documents_path.open("w", encoding="utf-8") as file:
             json.dump({key: asdict(value) for key, value in self.documents.items()}, file, indent=2)
+
+    def _ensure_index_consistency(self) -> None:
+        if self.index.ntotal == len(self.embeddings) == len(self.chunks):
+            return
+        logger.warning(
+            "Rebuilding FAISS index because index=%s embeddings=%s chunks=%s",
+            self.index.ntotal,
+            len(self.embeddings),
+            len(self.chunks),
+        )
+        self.index = faiss.IndexFlatIP(self.dimension)
+        if len(self.embeddings) and len(self.embeddings) == len(self.chunks):
+            self.index.add(self.embeddings)
+        else:
+            self.embeddings = np.empty((0, self.dimension), dtype="float32")
+            self.chunks = []
+            self.documents = {}
+        self.save()
 
     def add_document(
         self,

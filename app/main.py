@@ -51,6 +51,9 @@ async def upload_document(
     try:
         document = await rag_service.upload_pdf(file)
         return UploadResponse(message="PDF uploaded and indexed successfully.", document=document)
+    except HTTPError as exc:
+        logger.exception("Embedding API error")
+        raise HTTPException(status_code=502, detail=f"Embedding provider request failed: {exc}") from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -84,8 +87,8 @@ async def ask_question(
         answer, sources = await rag_service.ask(payload.question, top_k=top_k, document_id=payload.document_id)
         return AskResponse(answer=answer, sources=sources)
     except HTTPError as exc:
-        logger.exception("LLM API error")
-        raise HTTPException(status_code=502, detail=f"LLM provider request failed: {exc}") from exc
+        logger.exception("AI provider API error")
+        raise HTTPException(status_code=502, detail=f"AI provider request failed: {exc}") from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
