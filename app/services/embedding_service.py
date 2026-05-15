@@ -57,7 +57,7 @@ class EmbeddingService:
                         for text in batch
                     ]
                 }
-                response = await client.post(url, params={"key": self.gemini_api_key}, json=payload)
+                response = await client.post(url, headers={"x-goog-api-key": self.gemini_api_key}, json=payload)
                 response.raise_for_status()
                 data = response.json()
                 vectors.extend(item["values"] for item in data.get("embeddings", []))

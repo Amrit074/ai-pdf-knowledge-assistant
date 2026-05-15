@@ -51,8 +51,9 @@ class GeminiClient(LLMClient):
             ],
             "generationConfig": {"temperature": 0.2},
         }
+        headers = {"x-goog-api-key": self.api_key}
         async with httpx.AsyncClient(timeout=45) as client:
-            response = await client.post(url, params={"key": self.api_key}, json=payload)
+            response = await client.post(url, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
         return data["candidates"][0]["content"]["parts"][0]["text"].strip()
