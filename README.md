@@ -108,7 +108,7 @@ The application is configured through environment variables. Use `.env.example` 
 | `EMBEDDING_BATCH_SIZE` | Number of chunks embedded per API request |
 | `CHUNK_SIZE` | Maximum text chunk size |
 | `CHUNK_OVERLAP` | Overlap between adjacent chunks |
-| `TOP_K` | Default number of retrieved chunks |
+| `TOP_K` | Default number of retrieved chunks. Higher values provide more context but use more LLM tokens. |
 | `LLM_PROVIDER` | `gemini`, `openai`, or `mock` |
 | `GEMINI_API_KEY` | Gemini API key |
 | `GEMINI_MODEL` | Gemini model name |

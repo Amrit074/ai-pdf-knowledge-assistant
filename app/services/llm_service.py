@@ -9,8 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 SYSTEM_PROMPT = """You are a PDF Knowledge Assistant. Answer only from the supplied context.
-If the context does not contain the answer, say you could not find the answer in the uploaded documents.
-Be concise, accurate, and include page references when useful."""
+If the context does not contain enough information, say what is missing and then summarize any relevant context that was found.
+Give detailed, well-structured answers with headings or bullet points when useful.
+For summaries, cover the main ideas, supporting details, definitions, examples, and conclusions found in the context.
+Include page references when useful."""
 
 
 class LLMClient(ABC):
@@ -49,7 +51,7 @@ class GeminiClient(LLMClient):
                     ],
                 }
             ],
-            "generationConfig": {"temperature": 0.2},
+            "generationConfig": {"temperature": 0.25, "maxOutputTokens": 1200},
         }
         headers = {"x-goog-api-key": self.api_key}
         async with httpx.AsyncClient(timeout=45) as client:
@@ -75,6 +77,7 @@ class OpenAIClient(LLMClient):
                 },
             ],
             "temperature": 0.2,
+            "max_tokens": 1200,
         }
         headers = {"Authorization": f"Bearer {self.api_key}"}
         async with httpx.AsyncClient(timeout=45) as client:
