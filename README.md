@@ -2,7 +2,7 @@
 
 AI PDF Knowledge Assistant is a full-stack Retrieval-Augmented Generation application that allows users to upload PDF documents and ask natural-language questions based on the uploaded content.
 
-The system extracts text from PDFs, converts the content into semantic embeddings, stores those embeddings in a FAISS vector index, retrieves the most relevant document chunks for a user query, and generates a contextual answer using an LLM provider such as Gemini or OpenAI.
+The system extracts text from PDFs, converts the content into configurable hash or Gemini embeddings, stores those embeddings in a FAISS vector index, retrieves the most relevant document chunks for a user query, and generates a contextual answer using an LLM provider such as Gemini or OpenAI.
 
 ## Key Features
 
@@ -228,6 +228,14 @@ The included `Dockerfile` runs the FastAPI app with Uvicorn and exposes the serv
 docker build -t ai-pdf-knowledge-assistant .
 docker run --env-file .env -p 8000:8000 ai-pdf-knowledge-assistant
 ```
+
+## Testing
+
+```bash
+python -m unittest discover
+```
+
+The current tests cover text normalization and chunking behavior used by the PDF ingestion pipeline.
 
 ## Production Notes
 

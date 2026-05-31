@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     upload_dir: Path = Path("storage/uploads")
     index_dir: Path = Path("storage/index")
 
-    embedding_provider: str = "gemini"
+    embedding_provider: str = "hash"
     embedding_model: str = "models/gemini-embedding-001"
     embedding_dimension: int = Field(default=768, ge=64)
     embedding_batch_size: int = Field(default=16, ge=1, le=100)
