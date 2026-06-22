@@ -49,3 +49,23 @@ class DeleteResponse(BaseModel):
 class ErrorResponse(BaseModel):
     success: bool = False
     detail: str
+
+
+class UserProfile(BaseModel):
+    id: int
+    email: str
+    name: str
+    profile_picture: str | None = None
+
+
+class ChatHistoryItem(BaseModel):
+    id: int
+    document_id: str | None
+    question: str
+    answer: str
+    created_at: str
+
+
+class ChatHistoryResponse(BaseModel):
+    success: bool = True
+    conversations: list[ChatHistoryItem]

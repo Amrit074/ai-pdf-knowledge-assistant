@@ -220,6 +220,59 @@ The project includes Docker and Render configuration files for cloud deployment.
 
 The included Render configuration mounts persistent storage at `/app/storage` so uploaded PDFs, metadata, and FAISS index files can survive service restarts.
 
+### Google OAuth and JWT setup
+
+1. In Google Cloud Console, create an OAuth 2.0 **Web application** client.
+2. Add `http://localhost:8000/api/auth/google/callback` locally, and
+   `https://YOUR-RENDER-URL/api/auth/google/callback` in production, to its
+   authorized redirect URIs.
+3. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`,
+   `FRONTEND_URL`, `JWT_SECRET_KEY`, and `OAUTH_STATE_SECRET` as deployment
+   secrets. Generate different long random values for the two secrets.
+4. Deploy. The frontend redirects users to Google, receives the application's
+   short-lived JWT in the URL fragment, stores it in browser storage, and sends
+   it as `Authorization: Bearer <token>` for protected requests.
+
+All document upload, list, query, delete, and chat-history endpoints require a
+valid JWT. SQLite is the default persistent database and records Users,
+Documents, and ChatHistory; set `DATABASE_URL` to a managed SQLAlchemy-compatible
+database for a multi-instance deployment. The FAISS index remains file-backed,
+so it must be on shared persistent storage when running more than one app instance.
+
+## Multi-user security and interview notes
+
+**OAuth vs JWT:** Google OAuth proves a user's identity without this application
+handling a password. The application then issues its own signed, expiring JWT.
+OAuth is the identity-provider exchange; the JWT is the compact credential used
+to authorize this API's later calls.
+
+**Why an application JWT:** The backend validates Google only during the OAuth
+callback, maps the Google identity to a local user, and then controls its own
+expiry and claims. Each protected request verifies the JWT signature and loads
+the user, with no server-side session or refresh-token state.
+
+**User isolation:** Each Document row has a `user_id`. List and delete queries
+filter by that ID. For a query across all documents, the service passes only the
+current user's document IDs into FAISS filtering; an explicit foreign document ID
+returns `404`. Chat history is also queried by `user_id` only. This prevents both
+direct-ID and broad semantic-retrieval cross-user access.
+
+**FAISS architecture:** PDFs are still extracted with PyMuPDF, split into chunks,
+embedded, and stored in the existing FAISS index. Ownership is kept in the SQL
+database, while retrieval applies the authenticated user's allowed document-ID
+set before any chunk can become LLM context or a returned source.
+
+### Supported resume bullets
+
+- Built a multi-user FastAPI RAG document assistant with Google OAuth, expiring
+  JWT API authentication, and persistent user profiles.
+- Implemented user-isolated PDF upload, list, semantic retrieval, and deletion
+  by enforcing document ownership in both SQL queries and FAISS result filtering.
+- Added persisted, user-scoped chat history while retaining PyMuPDF ingestion,
+  chunking, FAISS retrieval, and Gemini/OpenAI source-grounded answer support.
+- Rendered assistant Markdown with DOMPurify-sanitized HTML on the existing
+  frontend, preserving the JSON answer API contract.
+
 ## Docker
 
 The included `Dockerfile` runs the FastAPI app with Uvicorn and exposes the service on the port provided by the deployment platform.

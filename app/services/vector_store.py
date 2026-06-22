@@ -162,11 +162,11 @@ class VectorStore:
         logger.info("Indexed document %s with %s chunks", filename, len(page_chunks))
         return document
 
-    def search(self, query_embedding: np.ndarray, top_k: int, document_id: str | None = None) -> list[SearchResult]:
+    def search(self, query_embedding: np.ndarray, top_k: int, document_id: str | None = None, allowed_document_ids: set[str] | None = None) -> list[SearchResult]:
         if self.index.ntotal == 0:
             return []
 
-        top_n = self.index.ntotal if document_id else min(top_k, self.index.ntotal)
+        top_n = self.index.ntotal if document_id or allowed_document_ids is not None else min(top_k, self.index.ntotal)
         scores, indices = self.index.search(query_embedding, top_n)
         results: list[SearchResult] = []
 
@@ -175,6 +175,8 @@ class VectorStore:
                 continue
             chunk = self.chunks[int(idx)]
             if document_id and chunk.document_id != document_id:
+                continue
+            if allowed_document_ids is not None and chunk.document_id not in allowed_document_ids:
                 continue
             results.append(SearchResult(metadata=chunk, score=float(score)))
             if len(results) >= top_k:

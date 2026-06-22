@@ -14,6 +14,24 @@ services:
         value: storage/uploads
       - key: INDEX_DIR
         value: storage/index
+      - key: DATABASE_URL
+        value: sqlite:////app/storage/app.db
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: OAUTH_STATE_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE_MINUTES
+        value: 60
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
       - key: EMBEDDING_PROVIDER
         value: hash
       - key: EMBEDDING_MODEL

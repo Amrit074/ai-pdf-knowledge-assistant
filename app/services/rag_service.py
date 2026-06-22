@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import UploadFile
 
@@ -34,7 +35,7 @@ class RAGService:
 
         temp_dir = self.upload_dir / "_incoming"
         temp_dir.mkdir(parents=True, exist_ok=True)
-        temp_path = temp_dir / Path(file.filename).name
+        temp_path = temp_dir / f"{uuid4().hex}-{Path(file.filename).name}"
         content = await file.read()
         if not content:
             raise ValueError("Uploaded PDF is empty.")
@@ -59,9 +60,9 @@ class RAGService:
         temp_path.replace(final_path)
         return document
 
-    async def ask(self, question: str, top_k: int, document_id: str | None = None) -> tuple[str, list[SourceChunk]]:
+    async def ask(self, question: str, top_k: int, document_id: str | None = None, allowed_document_ids: set[str] | None = None) -> tuple[str, list[SourceChunk]]:
         query_embedding = await self.embedding_service.embed_query(question)
-        results = self.vector_store.search(query_embedding, top_k=top_k, document_id=document_id)
+        results = self.vector_store.search(query_embedding, top_k=top_k, document_id=document_id, allowed_document_ids=allowed_document_ids)
         if not results:
             return "I could not find relevant content in the uploaded documents.", []
 

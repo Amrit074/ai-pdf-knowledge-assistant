@@ -14,6 +14,16 @@ class Settings(BaseSettings):
 
     upload_dir: Path = Path("storage/uploads")
     index_dir: Path = Path("storage/index")
+    database_url: str = "sqlite:///storage/app.db"
+    jwt_secret_key: str = "change-this-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = Field(default=60, ge=5, le=1440)
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    google_redirect_uri: str = "http://localhost:8000/api/auth/google/callback"
+    oauth_state_secret: str = "change-this-oauth-state-secret"
+    frontend_url: str = "http://localhost:8000/"
+    cors_origins: str = "http://localhost:8000"
 
     embedding_provider: str = "hash"
     embedding_model: str = "models/gemini-embedding-001"
@@ -37,6 +47,11 @@ class Settings(BaseSettings):
         if value.is_absolute():
             return value
         return self.project_root / value
+
+    def resolve_database_url(self) -> str:
+        if self.database_url.startswith("sqlite:///") and not self.database_url.startswith("sqlite:////"):
+            return "sqlite:///" + str(self.resolve_path(Path(self.database_url.removeprefix("sqlite:///"))))
+        return self.database_url
 
 
 @lru_cache

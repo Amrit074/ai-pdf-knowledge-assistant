@@ -14,9 +14,34 @@
           <p>A calm workspace for reading, searching, and asking from your documents.</p>
         </div>
         <span id="status-pill" class="status-pill">Checking API</span>
+        <div id="auth-actions" class="auth-actions">
+          <button id="google-login" class="google-login" type="button">
+            <span class="google-mark" aria-hidden="true">G</span>
+            Continue with Google
+          </button>
+          <span id="user-name" class="user-name hidden"></span>
+          <button id="logout" class="secondary hidden" type="button">Logout</button>
+        </div>
       </section>
 
-      <section class="workspace">
+      <section id="login-welcome" class="login-welcome hidden" aria-labelledby="login-heading">
+        <div class="login-copy">
+          <p class="eyebrow">PRIVATE DOCUMENT WORKSPACE</p>
+          <h2 id="login-heading">Your documents, your answers.</h2>
+          <p>Sign in to upload PDFs, ask source-grounded questions, and keep your conversations private.</p>
+          <ul class="login-benefits">
+            <li>Private document library</li>
+            <li>Secure semantic search</li>
+            <li>Saved question history</li>
+          </ul>
+        </div>
+        <button id="welcome-google-login" class="google-login login-cta" type="button">
+          <span class="google-mark" aria-hidden="true">G</span>
+          Continue with Google
+        </button>
+      </section>
+
+      <section id="workspace" class="workspace hidden">
         <aside class="sidebar">
           <form id="upload-form" class="panel">
             <h2>Documents</h2>
@@ -59,6 +84,8 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

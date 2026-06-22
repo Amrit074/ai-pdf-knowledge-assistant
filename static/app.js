@@ -11,14 +11,69 @@ const topKInput = document.querySelector("#top-k");
 const answerCard = document.querySelector("#answer-card");
 const answerBox = document.querySelector("#answer");
 const sourcesBox = document.querySelector("#sources");
+const googleLogin = document.querySelector("#google-login");
+const logoutButton = document.querySelector("#logout");
+const userName = document.querySelector("#user-name");
+const workspace = document.querySelector("#workspace");
+const loginWelcome = document.querySelector("#login-welcome");
+const welcomeGoogleLogin = document.querySelector("#welcome-google-login");
+let accessToken = localStorage.getItem("access_token");
+
+function captureOAuthToken() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const token = params.get("token");
+  if (token) {
+    localStorage.setItem("access_token", token);
+    accessToken = token;
+    history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+function renderMarkdown(markdown) {
+  const html = marked.parse(markdown, { breaks: true, gfm: true });
+  return DOMPurify.sanitize(html);
+}
 
 async function api(path, options = {}) {
-  const response = await fetch(path, options);
+  const headers = new Headers(options.headers || {});
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(path, { ...options, headers });
   const data = await response.json().catch(() => ({}));
+  if (response.status === 401) {
+    localStorage.removeItem("access_token");
+    accessToken = null;
+    showLoggedOut();
+  }
   if (!response.ok) {
     throw new Error(data.detail || "Request failed");
   }
   return data;
+}
+
+function showLoggedOut() {
+  googleLogin.classList.remove("hidden");
+  logoutButton.classList.add("hidden");
+  userName.classList.add("hidden");
+  workspace.classList.add("hidden");
+  loginWelcome.classList.remove("hidden");
+}
+
+function showLoggedIn(user) {
+  googleLogin.classList.add("hidden");
+  logoutButton.classList.remove("hidden");
+  userName.textContent = user.name;
+  userName.classList.remove("hidden");
+  loginWelcome.classList.add("hidden");
+  workspace.classList.remove("hidden");
+}
+
+async function loadProfile() {
+  if (!accessToken) return showLoggedOut();
+  try {
+    showLoggedIn(await api("/api/auth/me"));
+  } catch {
+    showLoggedOut();
+  }
 }
 
 function setBusy(button, busy, label) {
@@ -129,7 +184,7 @@ askForm.addEventListener("submit", async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    answerBox.textContent = data.answer;
+    answerBox.innerHTML = renderMarkdown(data.answer);
     sourcesBox.innerHTML = "";
     data.sources.forEach((source) => {
       const item = document.createElement("article");
@@ -150,5 +205,19 @@ askForm.addEventListener("submit", async (event) => {
   }
 });
 
+function beginGoogleLogin() {
+  window.location.href = "/api/auth/google/login";
+}
+
+googleLogin.addEventListener("click", beginGoogleLogin);
+welcomeGoogleLogin.addEventListener("click", beginGoogleLogin);
+logoutButton.addEventListener("click", () => {
+  localStorage.removeItem("access_token");
+  accessToken = null;
+  showLoggedOut();
+  renderDocuments([]);
+});
+
+captureOAuthToken();
 checkHealth();
-loadDocuments().catch(() => renderDocuments([]));
+loadProfile().then(() => accessToken ? loadDocuments().catch(() => renderDocuments([])) : renderDocuments([]));
