@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class AskRequest(BaseModel):
-    question: str = Field(..., min_length=3)
+    question: str = Field(..., min_length=3, max_length=2000)
     document_id: str | None = None
     top_k: int | None = Field(default=None, ge=1, le=20)
 
@@ -20,6 +20,9 @@ class AskResponse(BaseModel):
     success: bool = True
     answer: str
     sources: list[SourceChunk]
+    evidence_status: str = "retrieved"
+    retrieval_mode: str = "hash"
+    elapsed_ms: int = 0
 
 
 class DocumentInfo(BaseModel):

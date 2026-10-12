@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,12 +32,25 @@ class Settings(BaseSettings):
     chunk_size: int = Field(default=900, ge=200)
     chunk_overlap: int = Field(default=150, ge=0)
     top_k: int = Field(default=5, ge=1, le=20)
+    min_retrieval_score: float = Field(default=0.20, ge=-1, le=1)
+    max_upload_mb: int = Field(default=10, ge=1, le=50)
 
     llm_provider: str = "mock"
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self):
+        if self.app_env.lower() == "production":
+            for name in ("jwt_secret_key", "oauth_state_secret"):
+                value = getattr(self, name)
+                if len(value) < 32 or value.startswith("change-this"):
+                    raise ValueError(f"{name} must be a strong secret of at least 32 characters in production")
+            if self.jwt_secret_key == self.oauth_state_secret:
+                raise ValueError("JWT and OAuth state secrets must differ")
+        return self
 
     @property
     def project_root(self) -> Path:

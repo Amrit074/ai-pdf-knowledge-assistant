@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from time import perf_counter
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.auth import create_access_token, get_current_user
 from app.config import get_settings
 from app.database import Base, engine, get_db
-from app.db_models import ChatHistory, Document, User
+from app.db_models import ChatHistory, Document, User, IngestionJob
 from app.dependencies import get_rag_service, get_vector_store
 from app.logging_config import configure_logging
 from app.models import (
@@ -59,7 +60,11 @@ if settings.google_client_id and settings.google_client_secret:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    settings.resolve_path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     Base.metadata.create_all(bind=engine)
+    with Session(engine) as db:
+        db.execute(update(IngestionJob).where(IngestionJob.status.in_(["queued", "extracting", "embedding", "indexing"])).values(status="failed", error="Processing interrupted by restart. Please upload again."))
+        db.commit()
     yield
 
 
@@ -106,7 +111,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     token = await oauth.google.authorize_access_token(request)
     profile = token.get("userinfo") or await oauth.google.userinfo(token=token)
     google_id, email = profile.get("sub"), profile.get("email")
-    if not google_id or not email or not profile.get("email_verified", True):
+    if not google_id or not email or profile.get("email_verified") is not True:
         raise HTTPException(status_code=400, detail="Google did not return a verified email address.")
     user = db.scalar(select(User).where(User.google_id == google_id))
     if user is None:
@@ -178,6 +183,7 @@ async def ask_question(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> AskResponse:
+    started = perf_counter()
     try:
         top_k = payload.top_k or settings.top_k
         owned_ids = set(db.scalars(select(Document.document_id).where(Document.user_id == user.id)).all())
@@ -186,7 +192,9 @@ async def ask_question(
         answer, sources = await rag_service.ask(payload.question, top_k=top_k, document_id=payload.document_id, allowed_document_ids=owned_ids)
         db.add(ChatHistory(user_id=user.id, document_id=payload.document_id, question=payload.question, answer=answer))
         db.commit()
-        return AskResponse(answer=answer, sources=sources)
+        return AskResponse(answer=answer, sources=sources,
+            evidence_status="insufficient" if not sources else ("retrieval_only" if settings.llm_provider == "mock" else "retrieved"),
+            retrieval_mode=settings.embedding_provider, elapsed_ms=round((perf_counter()-started)*1000))
     except HTTPError as exc:
         logger.exception("AI provider API error")
         raise HTTPException(status_code=502, detail=f"AI provider request failed: {exc}") from exc
@@ -199,5 +207,16 @@ async def chat_history(user: User = Depends(get_current_user), db: Session = Dep
     entries = db.scalars(select(ChatHistory).where(ChatHistory.user_id == user.id).order_by(ChatHistory.created_at.desc())).all()
     return ChatHistoryResponse(conversations=[ChatHistoryItem(id=item.id, document_id=item.document_id, question=item.question, answer=item.answer, created_at=item.created_at.isoformat()) for item in entries])
 
+
+from app.ingestion import router as ingestion_router
+app.include_router(ingestion_router)
+from app.demo import router as demo_router
+app.include_router(demo_router)
+
+@app.get("/api/capabilities")
+async def capabilities():
+    return {"google_login": bool(settings.google_client_id and settings.google_client_secret),
+            "retrieval_mode": settings.embedding_provider, "answer_mode": settings.llm_provider,
+            "max_upload_mb": settings.max_upload_mb, "min_retrieval_score": settings.min_retrieval_score}
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

@@ -54,7 +54,11 @@ class VectorStore:
 
     def _load_index(self) -> faiss.Index:
         if self.index_path.exists():
-            index = faiss.read_index(str(self.index_path))
+            try:
+                index = faiss.read_index(str(self.index_path))
+            except RuntimeError:
+                logger.warning("Unreadable FAISS index; rebuilding from saved embeddings and chunks")
+                return faiss.IndexFlatIP(self.dimension)
             if index.d != self.dimension:
                 logger.warning(
                     "Ignoring FAISS index with dimension %s because configured dimension is %s",
@@ -130,6 +134,8 @@ class VectorStore:
         page_chunks: list[tuple[int, str]],
         embeddings: np.ndarray,
     ) -> DocumentMetadata:
+        if embeddings.ndim != 2 or embeddings.shape[1] != self.dimension or not np.isfinite(embeddings).all():
+            raise ValueError("Embeddings must be a finite matrix with the configured dimension.")
         if len(page_chunks) != len(embeddings):
             raise ValueError("Chunk count and embedding count do not match.")
 
