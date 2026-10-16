@@ -33,7 +33,7 @@ services:
       - key: CORS_ORIGINS
         sync: false
       - key: EMBEDDING_PROVIDER
-        value: hash
+        value: gemini
       - key: EMBEDDING_MODEL
         value: models/gemini-embedding-001
       - key: EMBEDDING_DIMENSION
